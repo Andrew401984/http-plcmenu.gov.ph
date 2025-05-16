@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title> PLC Delicious Food Menu</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: #f0f4f8;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 25px;
+  }
+  header h1 {
+    font-weight: 600;
+    font-size: 2.8rem;
+    color: #ff6f61;
+    margin: 0;
+    user-select: none;
+  }
+  .filter-bar {
+    max-width: 900px;
+    margin: 0 auto 35px auto;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+  .filter-bar button {
+    background: #fff;
+    border: 2px solid #ff6f61;
+    color: #ff6f61;
+    padding: 10px 18px;
+    font-weight: 600;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+  }
+  .filter-bar button.active,
+  .filter-bar button:hover {
+    background: #ff6f61;
+    color: white;
+    box-shadow: 0 4px 15px rgba(255,111,97,0.3);
+  }
+  .menu-container {
+    max-width: 900px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+    gap: 25px;
+  }
+  .menu-item {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .menu-item:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 12px 28px rgba(255,111,97,0.25);
+  }
+  .menu-item img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+  }
+  .menu-content {
+    padding: 18px 20px 22px 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .menu-title-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .menu-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #ff6f61;
+  }
+  .menu-price {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #444;
+  }
+  .menu-description {
+    font-size: 0.95rem;
+    line-height: 1.35;
+    color: #666;
+    flex-grow: 1;
+    margin-bottom: 15px;
+    user-select: text;
+  }
+  footer {
+    margin-top: 50px;
+    text-align: center;
+    color: #bbb;
+    font-size: 0.9rem;
+    user-select: none;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>🍽️ PLC Delicious Food Menu 🍽️</h1>
+  </header>
+
+  <section class="filter-bar" aria-label="Filter menu items by category">
+    <button class="active" data-filter="all">All</button>
+    <button data-filter="starters">Starters</button>
+    <button data-filter="mains">Mains</button>
+    <button data-filter="desserts">Desserts</button>
+    <button data-filter="drinks">Drinks</button>
+  </section>
+
+  <main class="menu-container" aria-live="polite" aria-label="Food menu items">
+    <!-- Menu items inserted here dynamically -->
+  </main>
+
+  <footer>© 2025 Delicious Food Menu. All rights reserved.By Master Chief Herold</footer>
+
+<script>
+  const menuItems = [
+    {
+      id: 1,
+      name: "Bruschetta",
+      description: "Grilled bread topped with fresh tomatoes, garlic, and basil.",
+      price: 1.00,
+      category: "starters",
+      image: "https://images.unsplash.com/photo-1600891964599-f61ba0e24092?auto=format&fit=crop&w=600&q=80"
+    },
+    {
+      id: 2,
+      name: "Caesar Salad",
+      description: "Crisp romaine lettuce with parmesan, croutons, and Caesar dressing.",
+      price: 7.99,
+      category: "starters",
+      image: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=600&q=80"
+    },
+    {
+      id: 3,
+      name: "Margherita Pizza",
+      description: "Classic pizza with tomatoes, mozzarella, fresh basil, and olive oil.",
+      price: 14.25,
+      category: "mains",
+      image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80"
+    },
+    {
+      id: 4,
+      name: "Spaghetti Carbonara",
+      description: "Pasta with creamy sauce, pancetta, parmesan, and black pepper.",
+      price: 15.99,
+      category: "mains",
+      image: "https://images.unsplash.com/photo-1582515073490-dc89a1087594?auto=format&fit=crop&w=600&q=80"
+    },
+    {
+      id: 5,
+      name: "Tiramisu",
+      description: "Coffee-flavored Italian dessert layered with mascarpone cheese.",
+      price: 7.50,
+      category: "desserts",
+      image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=600&q=80"
+    },
+    {
+      id: 6,
+      name: "Chocolate Lava Cake",
+      description: "Warm chocolate cake with a gooey molten center, served with vanilla ice cream.",
+      price: 8.25,
+      category: "desserts",
+      image: "https://images.unsplash.com/photo-1600891963954-26dcd3e51402?auto=format&fit=crop&w=600&q=80"
+    },
+    {
+      id: 7,
+      name: "Lemonade",
+      description: "Refreshing homemade lemonade with a hint of mint.",
+      price: 3.99,
+      category: "drinks",
+      image: "https://images.unsplash.com/photo-1562967916-eb82221dfb42?auto=format&fit=crop&w=600&q=80"
+    },
+    {
+      id: 8,
+      name: "Espresso",
+      description: "Strong and bold espresso shot.",
+      price: 2.75,
+      category: "drinks",
+      image: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80"
+    }
+  ];
+
+  const menuContainer = document.querySelector('.menu-container');
+  const filterButtons = document.querySelectorAll('.filter-bar button');
+
+  function renderMenuItems(filter = 'all') {
+    menuContainer.innerHTML = '';
+    const filteredItems = filter === 'all' ? menuItems : menuItems.filter(item => item.category === filter);
+    filteredItems.forEach(item => {
+      const itemEl = document.createElement('article');
+      itemEl.className = 'menu-item';
+      itemEl.innerHTML = `
+        <img src="${item.image}" alt="${item.name}">
+        <div class="menu-content">
+          <div class="menu-title-price">
+            <h3 class="menu-title">${item.name}</h3>
+            <p class="menu-price">$${item.price.toFixed(2)}</p>
+          </div>
+          <p class="menu-description">${item.description}</p>
+        </div>
+      `;
+      menuContainer.appendChild(itemEl);
+    });
+  }
+
+  filterButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      filterButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+      renderMenuItems(button.getAttribute('data-filter'));
+    });
+  });
+
+  // Initial render
+  renderMenuItems();
+</script>
+</body>
+</html>
+
