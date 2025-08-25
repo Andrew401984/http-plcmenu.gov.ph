@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Purchase Order - PLC</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: #f6f8fb;
+    margin: 0;
+    color: #222;
+  }
+  header {
+    background: #ff6f61;
+    color: #fff;
+    padding: 18px 22px;
+  }
+  header h1 { margin: 0; font-size: 1.6rem; }
+  main { max-width: 1100px; margin: 20px auto; padding: 0 16px 40px; }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    padding: 18px;
+    margin-bottom: 18px;
+  }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap: 16px; }
+  label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.95rem; }
+  input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid #e1e5ee; border-radius: 8px; font-family: inherit; }
+  .muted { color: #6c7a90; font-size: 0.9rem; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 900px; }
+  th, td { border-bottom: 1px solid #eef1f6; padding: 10px 8px; text-align: left; }
+  th { background: #fafbfe; font-size: 0.9rem; }
+  tfoot td { font-weight: 700; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn { background: #ff6f61; color: #fff; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+  .btn.secondary { background: #384861; }
+  .btn.outline { background: #fff; border: 2px solid #ff6f61; color: #ff6f61; }
+  .right { text-align: right; }
+  @media print {
+    .no-print { display: none !important; }
+    body { background: #fff; }
+    header { background: #fff; color: #000; border-bottom: 2px solid #000; }
+    .card { box-shadow: none; border: 1px solid #000; }
+    input, select, textarea { border: none; }
+    th, td { border-color: #000; }
+  }
+</style>
+</head>
+<body>
+  <header class="no-print">
+    <h1>Purchase Order</h1>
+  </header>
+  <main>
+    <section class="card">
+      <div class="grid-2">
+        <div>
+          <label for="supplierName">Supplier Name</label>
+          <input id="supplierName" placeholder="e.g., San Sans Sari2x Store" />
+        </div>
+        <div>
+          <label for="poNumber">PO / Order Slip No.</label>
+          <input id="poNumber" placeholder="e.g., 25-1009" />
+        </div>
+        <div>
+          <label for="dateOfOrder">Date of Order</label>
+          <input id="dateOfOrder" type="date" />
+        </div>
+        <div>
+          <label for="dateOfCatering">Date Needed</label>
+          <input id="dateOfCatering" type="date" />
+        </div>
+        <div>
+          <label for="customerName">Customer / Office</label>
+          <input id="customerName" placeholder="PLC" />
+        </div>
+        <div>
+          <label for="notes">Notes</label>
+          <input id="notes" placeholder="Optional notes or instructions" />
+        </div>
+      </div>
+      <p class="muted">Fill the fields then add line items below. Amounts compute automatically with 40% markup.</p>
+    </section>
+
+    <section class="card">
+      <div class="actions no-print" style="margin-bottom: 10px;">
+        <button id="addRow" class="btn">Add Item</button>
+        <button id="clearRows" class="btn outline">Clear Items</button>
+      </div>
+      <div class="table-wrap">
+        <table id="poTable" aria-label="Purchase order items table">
+          <thead>
+            <tr>
+              <th>Unit</th>
+              <th>Particular</th>
+              <th class="right">Order Qty</th>
+              <th class="right">Delivered Qty</th>
+              <th class="right">Balance</th>
+              <th class="right">Market Price</th>
+              <th class="right">Supplier Price</th>
+              <th class="right">Mark Up 40%</th>
+              <th class="right">Total Amount</th>
+              <th class="no-print">Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="8" class="right">Grand Total</td>
+              <td class="right" id="grandTotal">0.00</td>
+              <td class="no-print"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <section class="card no-print">
+      <div class="actions">
+        <button id="printBtn" class="btn secondary">Print / Save PDF</button>
+        <button id="backToMenu" class="btn outline" onclick="window.location.href='food-menu.html'">Back to Menu</button>
+      </div>
+    </section>
+  </main>
+
+<script>
+  const tableBody = document.querySelector('#poTable tbody');
+  const grandTotalEl = document.getElementById('grandTotal');
+
+  function toNumber(value) {
+    const n = parseFloat(String(value).replace(/[,]/g, ''));
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function formatMoney(value) {
+    return toNumber(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function computeRowTotal(row) {
+    const orderQty = toNumber(row.querySelector('[data-field="orderQty"]').value);
+    const deliveredQty = toNumber(row.querySelector('[data-field="deliveredQty"]').value);
+    const supplierPrice = toNumber(row.querySelector('[data-field="supplierPrice"]').value);
+    const balanceInput = row.querySelector('[data-field="balanceQty"]');
+    const markupCell = row.querySelector('[data-field="markup"]');
+    const totalCell = row.querySelector('[data-field="total"]');
+
+    const balance = Math.max(orderQty - deliveredQty, 0);
+    balanceInput.value = balance;
+
+    const markupPerUnit = supplierPrice * 0.40;
+    const sellingPrice = supplierPrice + markupPerUnit;
+    markupCell.textContent = formatMoney(markupPerUnit);
+
+    const total = sellingPrice * deliveredQty;
+    totalCell.textContent = formatMoney(total);
+
+    computeGrandTotal();
+  }
+
+  function computeGrandTotal() {
+    let sum = 0;
+    tableBody.querySelectorAll('tr').forEach(tr => {
+      const totalText = tr.querySelector('[data-field="total"]').textContent || '0';
+      sum += toNumber(totalText);
+    });
+    grandTotalEl.textContent = formatMoney(sum);
+  }
+
+  function bindRowEvents(tr) {
+    tr.querySelectorAll('input').forEach(input => {
+      input.addEventListener('input', () => computeRowTotal(tr));
+    });
+    tr.querySelector('[data-action="remove"]').addEventListener('click', () => {
+      tr.remove();
+      computeGrandTotal();
+    });
+  }
+
+  function addRow(prefill = {}) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input placeholder="kl/pack/cuts" value="${prefill.unit || ''}"></td>
+      <td><input placeholder="Item name" value="${prefill.particular || ''}"></td>
+      <td class="right"><input data-field="orderQty" type="number" min="0" value="${prefill.orderQty || 0}"></td>
+      <td class="right"><input data-field="deliveredQty" type="number" min="0" value="${prefill.deliveredQty || 0}"></td>
+      <td class="right"><input data-field="balanceQty" type="number" min="0" value="${prefill.balanceQty || 0}" readonly></td>
+      <td class="right"><input data-field="marketPrice" type="number" min="0" step="0.01" value="${prefill.marketPrice || 0}"></td>
+      <td class="right"><input data-field="supplierPrice" type="number" min="0" step="0.01" value="${prefill.supplierPrice || 0}"></td>
+      <td class="right" data-field="markup">0.00</td>
+      <td class="right" data-field="total">0.00</td>
+      <td class="no-print"><button class="btn outline" data-action="remove">Remove</button></td>
+    `;
+    tableBody.appendChild(tr);
+    bindRowEvents(tr);
+    computeRowTotal(tr);
+  }
+
+  document.getElementById('addRow').addEventListener('click', () => addRow());
+  document.getElementById('clearRows').addEventListener('click', () => {
+    tableBody.innerHTML = '';
+    computeGrandTotal();
+  });
+  document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+  // Seed with a few example items for convenience
+  const seedItems = [
+    { unit: 'kl', particular: 'White sugar', orderQty: 30, deliveredQty: 20, marketPrice: 45.00, supplierPrice: 63.00 },
+    { unit: 'kl', particular: 'Brown Sugar', orderQty: 65, deliveredQty: 45, marketPrice: 40.00, supplierPrice: 56.00 },
+    { unit: 'cuts', particular: 'All purpose flour', orderQty: 50, deliveredQty: 46, marketPrice: 40.00, supplierPrice: 57.40 },
+  ];
+  seedItems.forEach(addRow);
+</script>
+</body>
+</html>
+
